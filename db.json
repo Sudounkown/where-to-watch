@@ -12,21 +12,21 @@
       "name": "furiosa a mad max saga",
       "platform": "Max",
       "release_year": 2024,
-      "poster": "https://www.movieposters.com/cdn/shop/files/dune-part-two_tidfhvjl_480x.progressive.jpg?v=1708544824"
+      "poster": "https://www.movieposters.com/cdn/shop/files/scan_125c3acc-726c-425f-9512-9f13289d81a6_480x.progressive.jpg?v=1719593307"
     },
     {
       "id": "137233",
       "name": "the boys",
       "platform": "Amazon Prime Video",
       "release_year": 2019,
-      "poster": "https://www.movieposters.com/cdn/shop/files/dune-part-two_tidfhvjl_480x.progressive.jpg?v=1708544824"
+      "poster": "https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSNwLiJ1sRV1TQYB6PRCQ3lVKVaEmd3HvRvXoNEJnt9cojIjf4n"
     },
     {
       "id": "1022789",
       "name": "inside out 2",
       "platform": "Disney+",
       "release_year": 2024,
-      "poster": "https://www.movieposters.com/cdn/shop/files/dune-part-two_tidfhvjl_480x.progressive.jpg?v=1708544824"
+      "poster": "https://www.movieposters.com/cdn/shop/files/inside_out_two_ver2_480x.progressive.jpg?v=1711998871"
     },
     {
       "id": "278",
@@ -1874,25 +1874,29 @@
       "id": "324852",
       "name": "john wick chapter 2",
       "platform": "Peacock",
-      "release_year": 2017
+      "release_year": 2017,
+      "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRw_ymvKdnxYQ7C9Se8A9DPJuSKC2KklQd91EytxYBygFlgc6bF"
     },
     {
       "id": "458156",
       "name": "john wick chapter 3 parabellum",
       "platform": "Peacock",
-      "release_year": 2019
+      "release_year": 2019,
+      "poster": "https://www.movieposters.com/cdn/shop/products/cd1910aaecf99e3c0e03c08f9e608aa2_480x.progressive.jpg?v=1573572631"
     },
     {
       "id": "603692",
       "name": "john wick chapter 4",
       "platform": "Hulu",
-      "release_year": 2023
+      "release_year": 2023,
+      "poster": "https://www.movieposters.com/cdn/shop/files/john-wick-chapter-4_azl5d1ys_480x.progressive.jpg?v=1693575951"
     },
     {
       "id": "245891",
       "name": "john wick",
       "platform": "Peacock",
-      "release_year": 2014
+      "release_year": 2014,
+      "poster": "https://www.movieposters.com/cdn/shop/files/john_wick_480x.progressive.jpg?v=1707508571"
     },
     {
       "id": "85",
@@ -2181,6 +2185,105 @@
       "movies": [
         63174,
         66732
+      ]
+    },
+    {
+      "id": "6dd1",
+      "name": "Christmas list",
+      "movies": [
+        693134,
+        786892
+      ]
+    },
+    {
+      "id": "da94",
+      "name": "Action movie",
+      "movies": [
+        22,
+        324852,
+        458156,
+        603692,
+        66732
+      ]
+    },
+    {
+      "id": "76e5",
+      "name": "",
+      "movies": [
+        60735,
+        66732
+      ]
+    },
+    {
+      "id": "5387",
+      "name": "Type your list name here: ",
+      "movies": [
+        60735
+      ]
+    },
+    {
+      "id": "e9ee",
+      "name": "another list edited",
+      "movies": [
+        22,
+        60735
+      ]
+    },
+    {
+      "id": "bb6e",
+      "name": "John Wick Chapters",
+      "movies": [
+        324852,
+        603692,
+        245891
+      ]
+    },
+    {
+      "id": "34fe",
+      "name": "John test",
+      "movies": [
+        324852,
+        603692
+      ]
+    },
+    {
+      "id": "e18e",
+      "name": "Type your list name here: ",
+      "movies": [
+        245891
+      ]
+    },
+    {
+      "id": "b311",
+      "name": "test-download",
+      "movies": [
+        324852
+      ]
+    },
+    {
+      "id": "5287",
+      "name": "John test",
+      "movies": [
+        324852,
+        245891
+      ]
+    },
+    {
+      "id": "114f",
+      "name": "test-clean",
+      "movies": [
+        324852,
+        458156,
+        603692
+      ]
+    },
+    {
+      "id": "b6a0",
+      "name": "John wick collection",
+      "movies": [
+        324852,
+        458156,
+        603692
       ]
     }
   ]
