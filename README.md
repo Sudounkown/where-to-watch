@@ -1,5 +1,3 @@
-# where-to-watch
-
 <h1>Where to Watch</h1>
 
 Where to watch is a simple movie look up website that enables users to look up which streaming platform has the movie they want to watch.
