@@ -1,12 +1,10 @@
-// Global variables to store movies and lists data
+// Global variables to store movies and current user list
 let allMovies = [];
-let allLists = [];
-let currentListId = null; // Track the current auto-generated list
+let currentUserList = null; // Single user list that persists across searches
 
 // Initialize the app when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     fetchMovies();
-    fetchLists();
     setupEventListeners();
 });
 
@@ -16,67 +14,18 @@ function fetchMovies() {
         .then(response => response.json())
         .then(data => {
             allMovies = data; // Store movies in global variable
+            console.log('Movies loaded:', allMovies.length);
         })
         .catch(error => console.error('Error fetching movies:', error));
 }
 
-// Fetch all lists from the JSON server
-function fetchLists() {
-    fetch('http://localhost:3000/lists')
-        .then(response => response.json())
-        .then(data => {
-            // Ensure data is an array; if not, log an error and set allLists to an empty array
-            if (!Array.isArray(data)) {
-                console.error('Expected an array for lists, got:', data);
-                allLists = [];
-            } else {
-                // Normalize each list to have a movies array, defaulting to empty if undefined
-                allLists = data.map(list => ({ ...list, movies: list.movies || [] }));
-            }
-            displayLists();
-        })
-        .catch(error => console.error('Error fetching lists:', error));
-}
-
-// Display all lists in the lists-container
-function displayLists() {
-    const listsContainer = document.getElementById('lists-container');
-    if (!listsContainer) {
-        console.error('Error: #lists-container not found in the DOM');
-        return;
-    }
-    listsContainer.innerHTML = ''; // Clear existing content
-    allLists.forEach(list => {
-        const listDiv = document.createElement('div');
-        listDiv.className = 'list mb-4 p-2 bg-white rounded shadow';
-        listDiv.innerHTML = `
-            <input type="text" value="${list.name}" class="list-name w-full p-1 border rounded" data-id="${list.id}">
-            <div class="movies mt-2">
-                ${list.movies.map(movieId => {
-                    const movie = allMovies.find(m => m.id === movieId);
-                    const posterUrl = movie ? (movie.poster || './images/default-poster.jpg') : './images/default-poster.jpg';
-                    return movie ? `
-                        <div class="movie-item flex items-center justify-between p-2 border-b">
-                            <div class="flex items-center">
-                                <img src="${posterUrl}" alt="${movie.name}" width="50" class="mr-2">
-                                <span>${movie.name}</span>
-                            </div>
-                            <button class="delete-movie text-red-500" data-list-id="${list.id}" data-movie-id="${movie.id}">Delete</button>
-                        </div>
-                    ` : '';
-                }).join('')}
-            </div>
-        `;
-        listsContainer.appendChild(listDiv);
-    });
-}
-
-// Set up all event listeners with safety checks
+// Set up all event listeners
 function setupEventListeners() {
     const searchForm = document.getElementById('search-form');
     const resultsDiv = document.getElementById('results');
     const listsContainer = document.getElementById('lists-container');
 
+    // Handle search form submission
     if (searchForm) {
         searchForm.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -85,34 +34,38 @@ function setupEventListeners() {
                 console.error('Error: #default-search not found in the DOM');
                 return;
             }
-            const query = searchInput.value.toLowerCase();
-            const filteredMovies = allMovies.filter(movie => movie.name.toLowerCase().includes(query));
-            displaySearchResults(filteredMovies);
+            const query = searchInput.value.toLowerCase().trim();
+            
+            if (query) {
+                // Filter movies based on search query
+                const filteredMovies = allMovies.filter(movie => 
+                    movie.name.toLowerCase().includes(query)
+                );
+                displaySearchResults(filteredMovies);
+            }
         });
-    } else {
-        console.error('Error: #search-form not found in the DOM');
     }
 
+    // Handle list name changes and movie deletions
     if (listsContainer) {
         listsContainer.addEventListener('change', (event) => {
+            // Update list name when user types in the input field
             if (event.target.classList.contains('list-name')) {
-                const listId = event.target.dataset.id;
                 const newName = event.target.value;
-                updateListName(listId, newName);
+                updateCurrentListName(newName);
             }
         });
 
         listsContainer.addEventListener('click', (event) => {
+            // Delete movie from list when delete button is clicked
             if (event.target.classList.contains('delete-movie')) {
-                const listId = event.target.dataset.listId;
                 const movieId = parseInt(event.target.dataset.movieId);
-                deleteMovieFromList(listId, movieId);
+                deleteMovieFromCurrentList(movieId);
             }
         });
-    } else {
-        console.error('Error: #lists-container not found in the DOM');
     }
 
+    // Handle adding movies to list from search results
     if (resultsDiv) {
         resultsDiv.addEventListener('click', (event) => {
             if (event.target.classList.contains('add-to-list')) {
@@ -120,19 +73,26 @@ function setupEventListeners() {
                 addMovieToCurrentList(movieId);
             }
         });
-    } else {
-        console.error('Error: #results not found in the DOM');
     }
 }
 
-// Display search results with fallback for posters
+// Display search results
 function displaySearchResults(movies) {
     const resultsDiv = document.getElementById('results');
     if (!resultsDiv) {
         console.error('Error: #results not found in the DOM');
         return;
     }
+
+    // Clear previous results
     resultsDiv.innerHTML = '';
+
+    if (movies.length === 0) {
+        resultsDiv.innerHTML = '<p class="text-gray-500">No movies found matching your search.</p>';
+        return;
+    }
+
+    // Display each movie in search results
     movies.forEach(movie => {
         const posterUrl = movie.poster || './images/default-poster.jpg';
         const movieDiv = document.createElement('div');
@@ -147,19 +107,19 @@ function displaySearchResults(movies) {
         resultsDiv.appendChild(movieDiv);
     });
 
-    // Auto-generate a list with these results if there are any
-    if (movies.length > 0) {
-        autoGenerateList(movies);
+    // Create or update the current user list if it doesn't exist
+    if (!currentUserList) {
+        createNewUserList();
     }
 }
 
-// Auto-generate a new list with search results and error handling
-function autoGenerateList(movies) {
-    const movieIds = movies.map(movie => movie.id);
+// Create a new user list (only called once)
+function createNewUserList() {
     const newList = {
-        name: 'New List', // Default name, editable by user
-        movies: movieIds
+        name: 'My Movie List', // Default name, user can edit
+        movies: [] // Start with empty array
     };
+
     fetch('http://localhost:3000/lists', {
         method: 'POST',
         headers: {
@@ -174,74 +134,192 @@ function autoGenerateList(movies) {
         return response.json();
     })
     .then(list => {
-        console.log('List created:', list); // Debug: Check the response
-        allLists.push(list);
-        currentListId = list.id; // Set this as the current list
-        displayLists(); // Update the UI
+        console.log('New list created:', list);
+        currentUserList = list; // Store the created list
+        displayCurrentList(); // Show the empty list
     })
     .catch(error => {
         console.error('Error creating list:', error);
-        alert('Failed to create a list. Check the console and server.');
+        alert('Failed to create a list. Please check your server connection.');
     });
 }
 
-// Update the name of a list
-function updateListName(listId, newName) {
-    fetch(`http://localhost:3000/lists/${listId}`, {
+// Display only the current user's list
+function displayCurrentList() {
+    const listsContainer = document.getElementById('lists-container');
+    if (!listsContainer) {
+        console.error('Error: #lists-container not found in the DOM');
+        return;
+    }
+
+    // Clear existing content
+    listsContainer.innerHTML = '';
+
+    // If no current list, show nothing
+    if (!currentUserList) {
+        console.log('No current list to display');
+        return;
+    }
+
+    // Debug: Check what we have
+    console.log('Current list movies:', currentUserList.movies);
+    console.log('All movies loaded:', allMovies.length);
+
+    // Create the list display
+    const listDiv = document.createElement('div');
+    listDiv.className = 'list mb-4 p-4 bg-white rounded shadow';
+    
+    // Build the movies HTML with better debugging
+    const moviesHTML = currentUserList.movies.map(movieId => {
+        console.log('Looking for movie ID:', movieId, 'Type:', typeof movieId);
+        
+        // Make sure we're comparing the right types
+        const movie = allMovies.find(m => m.id == movieId); // Use == instead of === for type flexibility
+        
+        if (!movie) {
+            console.log('Movie not found for ID:', movieId);
+            return ''; // Skip if movie not found
+        }
+        
+        console.log('Found movie:', movie.name);
+        const posterUrl = movie.poster || './images/default-poster.jpg';
+        return `
+            <div class="movie-item flex items-center justify-between p-2 border-b">
+                <div class="flex items-center">
+                    <img src="${posterUrl}" alt="${movie.name}" width="50" class="mr-2">
+                    <div>
+                        <span class="font-medium">${movie.name}</span>
+                        <p class="text-sm text-gray-600">${movie.platform} • ${movie.release_year}</p>
+                    </div>
+                </div>
+                <button class="delete-movie px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600" data-movie-id="${movie.id}">Delete</button>
+            </div>
+        `;
+    }).join('');
+
+    // Show debug info in console
+    console.log('Generated movies HTML length:', moviesHTML.length);
+
+    listDiv.innerHTML = `
+        <div class="mb-3">
+            <input type="text" value="${currentUserList.name}" class="list-name w-full p-2 border rounded font-semibold" placeholder="Enter list name">
+        </div>
+        <div class="movies">
+            ${moviesHTML || '<p class="text-gray-500 text-center py-4">No movies in your list yet. Search and add some!</p>'}
+        </div>
+        <div class="mt-2 text-sm text-gray-500">
+            Movies in list: ${currentUserList.movies.length}
+        </div>
+    `;
+
+    listsContainer.appendChild(listDiv);
+}
+
+// Update the current list name
+function updateCurrentListName(newName) {
+    if (!currentUserList) return;
+
+    currentUserList.name = newName; // Update local data immediately
+
+    fetch(`http://localhost:3000/lists/${currentUserList.id}`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ name: newName })
     })
-    .then(() => {
-        const list = allLists.find(l => l.id == listId);
-        list.name = newName; // Update local data
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        console.log('List name updated successfully');
     })
-    .catch(error => console.error('Error updating list name:', error));
+    .catch(error => {
+        console.error('Error updating list name:', error);
+    });
 }
 
-// Delete a movie from a list
-function deleteMovieFromList(listId, movieId) {
-    const list = allLists.find(l => l.id == listId);
-    list.movies = list.movies.filter(id => id !== movieId);
-    fetch(`http://localhost:3000/lists/${listId}`, {
+// Add a movie to the current list
+function addMovieToCurrentList(movieId) {
+    if (!currentUserList) {
+        console.error('No current list available');
+        alert('Please search for movies first to create a list.');
+        return;
+    }
+
+    // Ensure we have movies loaded
+    if (allMovies.length === 0) {
+        console.error('Movies not loaded yet');
+        alert('Movies are still loading. Please wait and try again.');
+        return;
+    }
+
+    // Check if movie is already in the list
+    if (currentUserList.movies.includes(movieId)) {
+        alert('This movie is already in your list!');
+        return;
+    }
+
+    // Debug: Check what we're adding
+    console.log('Adding movie ID:', movieId, 'to list:', currentUserList.id);
+    console.log('Current movies in list:', currentUserList.movies);
+
+    // Add movie to local list immediately
+    currentUserList.movies.push(movieId);
+
+    // Update the server
+    fetch(`http://localhost:3000/lists/${currentUserList.id}`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ movies: list.movies })
+        body: JSON.stringify({ movies: currentUserList.movies })
     })
-    .then(() => {
-        displayLists(); // Refresh the lists display
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
     })
-    .catch(error => console.error('Error deleting movie:', error));
+    .then(data => {
+        console.log('Server response after adding movie:', data);
+        console.log('Movie added to list successfully');
+        displayCurrentList(); // Refresh the list display
+    })
+    .catch(error => {
+        console.error('Error adding movie to list:', error);
+        // Remove movie from local list if server update failed
+        currentUserList.movies = currentUserList.movies.filter(id => id !== movieId);
+        alert('Failed to add movie to list. Please try again.');
+    });
 }
 
-// Add a movie to the current auto-generated list with checks
-function addMovieToCurrentList(movieId) {
-    if (!currentListId) {
-        console.error('No current list ID. Search failed to create a list.');
-        alert('Please search for movies first to generate a list.');
-        return;
-    }
-    const list = allLists.find(l => l.id == currentListId);
-    if (!list) {
-        console.log('Item not found');
-        return;
-    }
-    if (!list.movies.includes(movieId)) {
-        list.movies.push(movieId);
-        fetch(`http://localhost:3000/lists/${currentListId}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ movies: list.movies })
-        })
-        .then(() => {
-            displayLists(); // Refresh the lists display
-        })
-        .catch(error => console.error('Error adding movie:', error));
-    }
+// Delete a movie from the current list
+function deleteMovieFromCurrentList(movieId) {
+    if (!currentUserList) return;
+
+    // Remove movie from local list immediately
+    currentUserList.movies = currentUserList.movies.filter(id => id !== movieId);
+
+    // Update the server
+    fetch(`http://localhost:3000/lists/${currentUserList.id}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ movies: currentUserList.movies })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        console.log('Movie deleted from list successfully');
+        displayCurrentList(); // Refresh the list display
+    })
+    .catch(error => {
+        console.error('Error deleting movie from list:', error);
+        // Add movie back to local list if server update failed
+        currentUserList.movies.push(movieId);
+        alert('Failed to delete movie from list. Please try again.');
+    });
 }
