@@ -93,6 +93,8 @@ function displaySearchResults(movies) {
     // Clear previous results
     resultsDiv.innerHTML = '';
 
+
+    //no results found
     if (movies.length === 0) {
         resultsDiv.innerHTML = '<p class="text-gray-500">No movies found matching your search.</p>';
         return;
@@ -224,7 +226,7 @@ function displayCurrentList() {
     listsContainer.appendChild(listDiv);
 }
 
-// Update the current list name
+// UPDATE the current list name
 function updateCurrentListName(newName) {
     if (!currentUserList) return;
 
